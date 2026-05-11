@@ -231,4 +231,4 @@ def wkn(_):
   return "nothing here dumbass"
 
 if (__name__ == "__main__"):
-  sck.run(app, host="0.0.0.0", port=443, ssl_context=('./acme/sgn.crt', './acme/dom.key'))
+  sck.run(app, host="0.0.0.0", port=443) # add ssl_context tuple here for HTTPS
