@@ -1,1 +1,1 @@
-![Image](https://cdn.jsdelivr.net/gh/aarikpokras/blaze@2713a7a/images/banner.png)
+![Image](https://cdn.jsdelivr.net/gh/aarikpokras/blaze@d012cfa/images/banner.png)
