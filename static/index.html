@@ -1,0 +1,250 @@
+<title>Blaze</title>
+
+<div id="menu">
+
+</div>
+
+<div id="msgcon">
+  <input id="msg" placeholder="message" />
+</div>
+
+<div id="msgs"></div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+*{
+  font-family: system-ui, sans-serif;
+}
+
+body{
+  overflow: hidden;
+  background-color: #261400;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+ 
+::-webkit-scrollbar-thumb {
+  background: #888; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+a{
+  color: #96a9bd;
+  text-decoration: none;
+}
+a:hover{
+  text-decoration: underline;
+}
+
+#msgcon{
+  position: absolute;
+  bottom: 0;
+  height: calc(10vh - 30px);
+  left: 0;
+  padding: 10px;
+}
+
+#msg{
+  width: calc(100vw - 20px);
+}
+
+#usr{
+  width: 15vw;
+}
+
+#msgs{
+  position: absolute;
+  overflow: scroll;
+  bottom: calc(10vh - 10px);
+  left: 0;
+  box-sizing: border-box;
+  height: calc(90vh + 10px);
+  text-wrap: wrap;
+  overflow-x: hidden;
+  width: 100vw;
+  padding: 10px;
+}
+
+input{
+  height: calc(10vh - 30px);
+  border-radius: 10px;
+  padding: 6px;
+  box-size: border-box;
+  border: 1px solid #473119;
+  background-color: #2e1800;
+  color: white;
+  transition: border 0.07s;
+}
+
+input:focus{
+  border: 4px solid #473119;
+  outline: none;
+}
+
+.message{
+  margin-top: 10px !important;
+  display: block;
+  color: white;
+  width: 90%;
+  white-space: normal;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.message:hover{
+  background-color: #4a2700;
+}
+
+message-preamble{
+  color: lightgrey;
+  font-size: 12px;
+  border-radius: 5px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+button[onclick="hPre()"]{
+  height: calc(10vh - 30px);
+  margin-left: 30px;
+  box-sizing: border-box;
+  border-radius: 50px;
+  background: royalblue;
+  color: white;
+  transition: 0.2s border;
+  border: none;
+  width: 110px;
+}
+
+</style>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const lgdin = await fetch('/api/loggedin');
+  const txt = await lgdin.text();
+  if (txt != "1") {
+    document.getElementById('msg').setAttribute('disabled', 'true');
+    document.getElementById('msg').setAttribute('placeholder', 'Log in to send messages');
+    LOGGED_IN = false;
+  } else LOGGED_IN = true;
+});
+
+var SERVER;
+
+const PORT = ":443";
+
+if (window.location.hostname) {
+  SERVER = "wss://" + window.location.hostname + PORT;
+} else {
+  SERVER = "http://192.168.1.237" + PORT;
+}
+
+console.log(`Server: {SERVER}`);
+
+const sck = io(SERVER);
+
+var dscon = new Audio('/sounds/discon');
+var conct = new Audio('/sounds/connect')
+
+sck.on("dst", data => {
+  document.write('<img src="/sounds/pat.gif" />')
+});
+
+sck.on("upd", data => {
+  console.log(data);
+  const elem = document.createElement('span');
+  time = new Date();
+  var dispUn = "";
+  if (data["usr"]) {
+    dispUn = "<span style='color: rgb(" + data["color"][0] + ", " + data["color"][1] + ", " + data["color"][2] + ");'>" + data["usr"]
+  } else {
+    dispUn = data["ip"]
+  }
+  var dispMin = "";
+  if (String(time.getMinutes()).length < 2) {
+    dispMin = "0" + String(time.getMinutes());
+  } else {
+    dispMin = time.getMinutes();
+  }
+
+  const preamble = time.getMonth() + 1 + "/" + time.getDate() + "/" + time.getFullYear() + " | " + time.getHours() + ":" + dispMin + ", sent from " + data["ip"];
+
+  elem.innerHTML = "<b>" + dispUn + "</b><message-preamble>" + preamble + "</message-preamble><br />" + data["msg"] + "<br />"
+
+  if (preamble_hidden) {
+    elem.getElementsByTagName('message-preamble')[0].style.visibility = "hidden";
+    elem.getElementsByTagName('message-preamble')[0].style.position = "absolute";
+  }
+
+  elem.classList.add("message");
+  document.getElementById('msgs').appendChild(elem);
+  new Audio("https://www.myinstants.com/media/sounds/blip-sound-frontend.mp3").play();
+  document.getElementById('msgs').scrollBy({ top: 100, behavior: 'smooth' });
+});
+
+sck.on("connect", async () => {
+  const celem = document.createElement('span');
+  celem.classList.add('message');
+  const lgi_ = await fetch('/api/loggedin');
+  const lgi = await lgi_.text();
+  if (lgi == "1") {
+    celem.innerHTML = "Connected. Client id <code>" + sck.id + "</code><br />";
+  } else {
+    celem.innerHTML = "Connected as observer. Client id <code>" + sck.id + "</code>. <a href='/login'>Log in</a> or <a href='/signup'>sign up</a> to send messages.<br />";
+  }
+  document.getElementById('msgs').append(celem);
+  conct.play();
+});
+
+sck.on("dscon", () => {
+  const delem = document.createElement('span');
+  delem.classList.add('message');
+  delem.innerHTML = "Disconnected from the message server.<br />";
+  document.getElementById('msgs').append(delem);
+  dscon.play();
+});
+
+document.addEventListener('keypress', (e) => {
+  if (e.key == "Enter" && document.getElementById('msg').value) post();
+});
+
+var preamble_hidden = false;
+
+function post() {
+  var msg = document.getElementById('msg').value;
+  fetch("/send", {method: 'POST',
+                 headers: {'Content-Type': 'application/json'},
+                 body: JSON.stringify({'msg': msg})
+  });
+  document.getElementById('msg').value = "";
+}
+
+function hPre() {
+  if (preamble_hidden) {
+    document.querySelectorAll('message-preamble').forEach(e => {
+      e.style.visibility = "visible";
+      e.style.position = "relative";
+      preamble_hidden = false;
+    });
+  } else {
+    document.querySelectorAll('message-preamble').forEach(e => {
+      e.style.visibility = "hidden";
+      e.style.position = "absolute";
+      preamble_hidden = true;
+    });
+  }
+}
+
+</script>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<title>Blaze Signup</title>
+
+<script src="jquery.min.js"></script>
+<div id="mncon">
+  <input id="usr" placeholder="username" autocomplete="off" max="40" />
+  <input id="pw" placeholder="password" type="password" />
+  <button onclick="su()">Sign up</button>
+  <span id="st"></span>
+</div>
+
+<style>
+*{
+  font-family: system-ui;
+}
+body{
+  background-color: #261400;
+}
+#st{
+  color: white;
+  font-size: 10px;
+}
+#mncon{
+  transform-origin: center;
+  border-radius: 5px;
+  border: 1px solid grey;
+  width: auto;
+  position: absolute;
+  margin-left: 50vw;
+  margin-top: 40vh;
+  padding: 50px;
+  transform: translate(-50%, -50%) scale(1.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+input{
+  padding: 5px;
+  color: white;
+  border: 1px solid #473119;
+  background-color: #2e1800;
+  border-radius: 5px;
+}
+button{
+  padding: 5px;
+  border: 1px solid grey;
+  background-color: #001125;
+  border-radius: 5px;
+  color: white;
+  transition: background-color 0.07s;
+}
+button:hover{
+  background-color: #192a3e;
+}
+</style>
+
+<script>
+const SERVER = "http://" + window.location.hostname + ":80";
+
+$(document).on('DOMContentLoaded', async () => {
+  const lgd = await fetch("/api/loggedin");
+  const txt = await lgd.text();
+  if (txt == 1) {
+    window.location.href = '/';
+  }
+})
+
+async function su() {
+  const rsp = await fetch("/signup", {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ 'usr': $('#usr').val(), 'pw': $('#pw').val() })
+  });
+  const txt = await rsp.text();
+  if (!rsp.ok) {
+    $("#st").html(txt);
+    $("#st").css("color", "red");
+    $("#pw").val("");
+  } else {
+    window.location.href = '/login';
+  }
+}
+</script>
